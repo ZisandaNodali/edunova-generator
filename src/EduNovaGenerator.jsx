@@ -807,6 +807,34 @@ export default function EduNovaGenerator() {
 
   const hasInteractiveContent = contentType === 'flashcards' || contentType === 'quiz';
 
+   // Keywords for filtering content
+  const itKeywords = [
+    'computer', 'programming', 'coding', 'internet', 'network', 'cybersecurity',
+    'software', 'hardware', 'data', 'ai', 'machine learning', 'robotics', 'cloud',
+    'python', 'javascript', 'html', 'css', 'web', 'app', 'technology', 'digital', 'security'
+  ];
+
+  const handleGenerateWithValidation = () => {
+    const userTopic = topic.trim().toLowerCase();
+
+    if (!userTopic) {
+      setError('Please enter a topic before generating content.');
+      return;
+    }
+
+    const isITRelated = itKeywords.some((keyword) =>
+      userTopic.includes(keyword)
+    );
+
+    if (!isITRelated) {
+      setError('Please enter a topic related to IT or digital technology.');
+      return;
+    }
+
+    setError('');
+    handleGenerate();
+  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -932,7 +960,11 @@ export default function EduNovaGenerator() {
                     }}
                     placeholder="e.g., Internet Safety, Magnets, Solar System, Coding Basics..."
                     className="w-full p-5 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-all duration-300 text-gray-800 placeholder-gray-400 text-lg bg-gray-50 focus:bg-white focus:shadow-lg"
-                    onKeyPress={(e) => e.key === 'Enter' && !loading && handleGenerate()}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !loading) {
+                        handleGenerateWithValidation();
+                      }
+                    }}
                   />
                   <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
                     <Sparkles className="w-5 h-5 text-gray-400" />
@@ -947,7 +979,7 @@ export default function EduNovaGenerator() {
 
               {/* Enhanced Generate Button */}
               <button
-                onClick={handleGenerate}
+                onClick={handleGenerateWithValidation}
                 disabled={loading || !topic.trim()}
                 className={`w-full py-5 px-8 rounded-2xl font-bold text-lg text-white transition-all duration-300 flex items-center justify-center space-x-3 relative overflow-hidden group ${
                   loading || !topic.trim()
