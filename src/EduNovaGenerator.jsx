@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {  Mic, MicOff, Volume2, VolumeX, Headphones } from 'lucide-react';
 import { promptTemplates } from './prompts'; // at the top
-import { BookOpen, Zap, Brain, FileText, Play, Copy, Download, Star, Sparkles, Heart, Loader2, CheckCircle } from 'lucide-react';
+import { BookOpen, Zap, Brain, FileText, Play, Copy, Download, Star, Sparkles, Heart, Loader2, CheckCircle, RotateCcw, Trophy, Target } from 'lucide-react';
 
 // Voice Assistant Hook (integrated from your voice assistant file)
 const useVoiceAssistant = () => {
@@ -224,6 +224,7 @@ const VoiceControls = ({ voiceAssistant, onVoiceCommand, className = "" }) => {
     </div>
   );
 };
+
 // Content type configurations with enhanced styling
 const contentTypes = [
   { 
@@ -288,6 +289,292 @@ const contentTypes = [
   }
 ];
 
+// Interactive Flashcard Component
+const InteractiveFlashcards = ({ content, topic }) => {
+  const [flippedCards, setFlippedCards] = useState(new Set());
+  const [currentCard, setCurrentCard] = useState(0);
+  
+  // Parse flashcard content
+  const parseFlashcards = (content) => {
+    const cards = [];
+    const cardMatches = content.match(/CARD \d+:[\s\S]*?(?=CARD \d+:|$)/g);
+    
+    if (cardMatches) {
+      cardMatches.forEach(cardText => {
+        const termMatch = cardText.match(/TERM:\s*(.*?)(?=\n|DEFINITION:)/s);
+        const defMatch = cardText.match(/DEFINITION:\s*(.*?)(?=\n\n|$)/s);
+        
+        if (termMatch && defMatch) {
+          cards.push({
+            term: termMatch[1].trim(),
+            definition: defMatch[1].trim()
+          });
+        }
+      });
+    }
+    
+    return cards.length > 0 ? cards : [{ term: 'Sample Term', definition: 'Click generate to create flashcards!' }];
+  };
+
+  const cards = parseFlashcards(content);
+
+  const toggleFlip = (index) => {
+    const newFlipped = new Set(flippedCards);
+    if (newFlipped.has(index)) {
+      newFlipped.delete(index);
+    } else {
+      newFlipped.add(index);
+    }
+    setFlippedCards(newFlipped);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h3 className="text-2xl font-bold text-gray-800 mb-2 flex items-center justify-center">
+          <Zap className="w-6 h-6 mr-2 text-orange-500" />
+          ⚡ Interactive Flashcards
+        </h3>
+        <p className="text-gray-600">Click cards to flip and reveal answers!</p>
+      </div>
+
+      <div className="grid gap-4">
+        {cards.map((card, index) => (
+          <div
+            key={index}
+            className="relative h-32 cursor-pointer perspective-1000"
+            onClick={() => toggleFlip(index)}
+          >
+            <div className={`relative w-full h-full transition-transform duration-500 transform-style-preserve-3d ${
+              flippedCards.has(index) ? 'rotate-y-180' : ''
+            }`}>
+              {/* Front of card */}
+              <div className="absolute inset-0 w-full h-full backface-hidden bg-gradient-to-r from-orange-400 to-red-500 rounded-xl shadow-lg flex items-center justify-center p-4">
+                <div className="text-center text-white">
+                  <div className="text-lg font-bold mb-2">📚 Term {index + 1}</div>
+                  <div className="text-xl font-semibold">{card.term}</div>
+                  <div className="text-sm mt-2 opacity-80">Click to reveal definition!</div>
+                </div>
+              </div>
+              
+              {/* Back of card */}
+              <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-gradient-to-r from-blue-400 to-purple-500 rounded-xl shadow-lg flex items-center justify-center p-4">
+                <div className="text-center text-white">
+                  <div className="text-lg font-bold mb-2">💡 Definition</div>
+                  <div className="text-base leading-relaxed">{card.definition}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-center">
+        <button
+          onClick={() => setFlippedCards(new Set())}
+          className="px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-600 text-white rounded-xl hover:from-gray-500 hover:to-gray-700 transition-all duration-200 flex items-center space-x-2 mx-auto"
+        >
+          <RotateCcw className="w-5 h-5" />
+          <span>Reset All Cards</span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Interactive Quiz Component
+const InteractiveQuiz = ({ content, topic }) => {
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [showResults, setShowResults] = useState(false);
+  const [quizCompleted, setQuizCompleted] = useState(false);
+
+  // Parse quiz content
+  const parseQuiz = (content) => {
+    const questions = [];
+    const questionMatches = content.match(/QUESTION \d+:[\s\S]*?(?=QUESTION \d+:|$)/g);
+    
+    if (questionMatches) {
+      questionMatches.forEach(questionText => {
+        const questionMatch = questionText.match(/QUESTION \d+:\s*(.*?)(?=\n)/);
+        const optionsMatch = questionText.match(/[ABCD]\)\s*(.*?)(?=\n|$)/g);
+        const correctMatch = questionText.match(/CORRECT:\s*([ABCD])/);
+        
+        if (questionMatch && optionsMatch && correctMatch) {
+          questions.push({
+            question: questionMatch[1].trim(),
+            options: optionsMatch.map(opt => opt.substring(3).trim()),
+            correct: correctMatch[1].trim(),
+            letters: ['A', 'B', 'C', 'D']
+          });
+        }
+      });
+    }
+    
+    return questions.length > 0 ? questions : [
+      {
+        question: 'Sample Question - Click generate to create quiz!',
+        options: ['Option A', 'Option B', 'Option C', 'Option D'],
+        correct: 'A',
+        letters: ['A', 'B', 'C', 'D']
+      }
+    ];
+  };
+
+  const questions = parseQuiz(content);
+
+  const handleAnswerSelect = (answerLetter) => {
+    setSelectedAnswers({
+      ...selectedAnswers,
+      [currentQuestion]: answerLetter
+    });
+  };
+
+  const nextQuestion = () => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+    } else {
+      setQuizCompleted(true);
+      setShowResults(true);
+    }
+  };
+
+  const resetQuiz = () => {
+    setCurrentQuestion(0);
+    setSelectedAnswers({});
+    setShowResults(false);
+    setQuizCompleted(false);
+  };
+
+  const calculateScore = () => {
+    let correct = 0;
+    questions.forEach((q, index) => {
+      if (selectedAnswers[index] === q.correct) {
+        correct++;
+      }
+    });
+    return correct;
+  };
+
+  const currentQ = questions[currentQuestion];
+  const score = calculateScore();
+  const percentage = Math.round((score / questions.length) * 100);
+
+  if (showResults) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-8">
+          <Trophy className="w-16 h-16 mx-auto mb-4 text-yellow-500" />
+          <h3 className="text-3xl font-bold text-gray-800 mb-2">🎉 Quiz Complete!</h3>
+          <div className="text-6xl font-bold text-green-600 mb-2">{score}/{questions.length}</div>
+          <div className="text-xl text-gray-600 mb-4">{percentage}% Correct</div>
+          
+          <div className="space-y-3 mb-6">
+            {questions.map((q, index) => (
+              <div key={index} className={`p-4 rounded-lg border-2 ${
+                selectedAnswers[index] === q.correct 
+                  ? 'border-green-300 bg-green-50' 
+                  : 'border-red-300 bg-red-50'
+              }`}>
+                <div className="font-semibold text-gray-800 mb-2">Q{index + 1}: {q.question}</div>
+                <div className="text-sm">
+                  <span className={selectedAnswers[index] === q.correct ? 'text-green-600' : 'text-red-600'}>
+                    Your answer: {selectedAnswers[index] || 'Not answered'}
+                  </span>
+                  {selectedAnswers[index] !== q.correct && (
+                    <span className="text-green-600 ml-4">Correct: {q.correct}</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={resetQuiz}
+            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 mx-auto"
+          >
+            <RotateCcw className="w-5 h-5" />
+            <span>Try Again</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h3 className="text-2xl font-bold text-gray-800 mb-2 flex items-center justify-center">
+          <Brain className="w-6 h-6 mr-2 text-green-500" />
+          🧠 Interactive Quiz
+        </h3>
+        <div className="text-gray-600">
+          Question {currentQuestion + 1} of {questions.length}
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+          <div 
+            className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
+          ></div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h4 className="text-xl font-bold text-gray-800 mb-6">
+          {currentQ.question}
+        </h4>
+        
+        <div className="space-y-3">
+          {currentQ.options.map((option, index) => {
+            const letter = currentQ.letters[index];
+            const isSelected = selectedAnswers[currentQuestion] === letter;
+            
+            return (
+              <button
+                key={index}
+                onClick={() => handleAnswerSelect(letter)}
+                className={`w-full p-4 text-left rounded-xl border-2 transition-all duration-200 ${
+                  isSelected
+                    ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 font-bold ${
+                    isSelected 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {letter}
+                  </div>
+                  <span className="font-medium">{option}</span>
+                  {isSelected && <CheckCircle className="w-5 h-5 ml-auto text-blue-500" />}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-6 flex justify-between items-center">
+          <div className="text-sm text-gray-500">
+            {selectedAnswers[currentQuestion] ? 'Answer selected!' : 'Choose an answer to continue'}
+          </div>
+          <button
+            onClick={nextQuestion}
+            disabled={!selectedAnswers[currentQuestion]}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+              selectedAnswers[currentQuestion]
+                ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600 shadow-lg'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {currentQuestion === questions.length - 1 ? 'Finish Quiz' : 'Next Question'} →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function EduNovaGenerator() {
   const [ageGroup, setAgeGroup] = useState('6–8');
@@ -405,7 +692,7 @@ export default function EduNovaGenerator() {
     }
   };
 
-    // Enhanced generate function with voice feedback
+  // Gemini API integration
   const handleGenerate = async () => {
     if (!topic.trim()) {
       const message = 'Please enter a topic to generate content.';
@@ -415,76 +702,65 @@ export default function EduNovaGenerator() {
       }
       return;
     }
- 
+
     setLoading(true);
-   
+
     if (voiceAssistant.voiceEnabled) {
       await voiceAssistant.speak("Generating your educational content. This will take a moment.");
     }
- 
+
     const prompt = promptTemplates[contentType]({ ageGroup, topic });
-   
+
     try {
-      // Simulated API call - replace with your actual Gemini API call
-      const response = await new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({
-            ok: true,
-            json: () => Promise.resolve({
-              candidates: [{
-                content: {
-                  parts: [{
-                    text: `# ${contentTypes.find(ct => ct.value === contentType)?.label}: ${topic}
- 
-## For Ages ${ageGroup}
- 
-Here's your generated educational content about ${topic}:
- 
-### Key Learning Objectives:
-- Students will understand the basic concepts of ${topic}
-- Students will be able to identify key elements
-- Students will apply their knowledge through activities
- 
-### Main Content:
-This is a comprehensive ${contentType.replace('_', ' ')} designed specifically for children ages ${ageGroup}. The content covers all essential aspects of ${topic} in an age-appropriate and engaging manner.
- 
-### Activities:
-1. Interactive discussion about ${topic}
-2. Hands-on exploration activities
-3. Creative projects related to the subject
-4. Assessment and review exercises
- 
-### Assessment:
-Students will demonstrate their understanding through various methods including participation, creative work, and knowledge checks.
- 
-This content is designed to be engaging, educational, and appropriate for the specified age group.`
-                  }]
-                }
-              }]
-            })
-          });
-        }, 2000);
-      });
- 
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 8192,
+            },
+          })
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
- 
+
       const data = await response.json();
       const generatedText = data.candidates[0].content.parts[0].text;
       setResult(generatedText);
- 
+
       if (voiceAssistant.voiceEnabled) {
         await voiceAssistant.speak("Content generated successfully! You can say 'read it' to hear the content or use the copy and download buttons.");
       }
+
     } catch (error) {
       console.error('Error generating content:', error);
       const errorMessage = '⚠️ Error generating content. Please check your API key and try again.';
       setResult(errorMessage);
-     
+
       if (voiceAssistant.voiceEnabled) {
         await voiceAssistant.speak("Sorry, there was an error generating content. Please try again.");
       }
+
     } finally {
       setLoading(false);
     }
@@ -515,6 +791,22 @@ This content is designed to be engaging, educational, and appropriate for the sp
   };
 
   const selectedContentType = contentTypes.find(ct => ct.value === contentType);
+
+  // Function to render interactive content
+  const renderInteractiveContent = () => {
+    if (!result) return null;
+    
+    if (contentType === 'flashcards') {
+      return <InteractiveFlashcards content={result} topic={topic} />;
+    } else if (contentType === 'quiz') {
+      return <InteractiveQuiz content={result} topic={topic} />;
+    }
+    
+    return null;
+  };
+
+  const hasInteractiveContent = contentType === 'flashcards' || contentType === 'quiz';
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -726,12 +1018,16 @@ This content is designed to be engaging, educational, and appropriate for the sp
                       Generated for ages {ageGroup} • Topic: {topic}
                     </div>
                   </div>
-                  <div className="p-8 max-h-96 overflow-y-auto">
-                    <div className="prose prose-sm max-w-none">
-                      <pre className="whitespace-pre-wrap text-gray-700 leading-relaxed font-sans text-base bg-gray-50 p-6 rounded-xl border border-gray-200">
-                        {result}
-                      </pre>
-                    </div>
+                  <div className="p-8 max-h-[80vh] overflow-y-auto">
+                    {hasInteractiveContent ? (
+                      renderInteractiveContent()
+                    ) : (
+                      <div className="prose prose-sm max-w-none">
+                        <pre className="whitespace-pre-wrap text-gray-700 leading-relaxed font-sans text-base bg-gray-50 p-6 rounded-xl border border-gray-200">
+                          {result}
+                        </pre>
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
@@ -781,6 +1077,20 @@ This content is designed to be engaging, educational, and appropriate for the sp
           </div>
         </div>
       </div>
+      <style jsx>{`
+        .perspective-1000 {
+          perspective: 1000px;
+        }
+        .transform-style-preserve-3d {
+          transform-style: preserve-3d;
+        }
+        .backface-hidden {
+          backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+          transform: rotateY(180deg);
+        }
+      `}</style>
     </div>
   );
 }

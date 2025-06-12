@@ -18,12 +18,38 @@ Topic: ${topic}
 Each flashcard should have:
 - A simple STEM or digital literacy term
 - A short, age-appropriate definition
+Format each flashcard exactly like this:
+CARD 1:
+TERM: [term here]
+DEFINITION: [definition here]
+
+CARD 2:
+TERM: [term here]  
+DEFINITION: [definition here]
+
+Continue this format for all 5 cards.
 Format the response in plain text without markdown formatting.
   `,
 
   quiz: ({ ageGroup, topic }) => `
 Create a short quiz for children aged ${ageGroup} on the topic: ${topic}.
 Include 5 multiple choice questions with 4 options each and the correct answer.
+Format each question exactly like this:
+QUESTION 1: [question text]
+A) [option A]
+B) [option B]
+C) [option C]
+D) [option D]
+CORRECT: [A, B, C, or D]
+
+QUESTION 2: [question text]
+A) [option A]
+B) [option B]
+C) [option C]
+D) [option D]
+CORRECT: [A, B, C, or D]
+
+Continue this format for all 5 questions.
 Keep the tone light and fun.
 Format the response in plain text without markdown formatting.
   `,
