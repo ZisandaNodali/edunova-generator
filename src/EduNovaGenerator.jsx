@@ -958,7 +958,7 @@ export default function EduNovaGenerator() {
                       setTopic(e.target.value);
                       setError('');
                     }}
-                    placeholder="e.g., Internet Safety, Magnets, Solar System, Coding Basics..."
+                    placeholder="e.g., Internet Safety, Coding Basics, Cybersecurity ..."
                     className="w-full p-5 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-all duration-300 text-gray-800 placeholder-gray-400 text-lg bg-gray-50 focus:bg-white focus:shadow-lg"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && !loading) {
